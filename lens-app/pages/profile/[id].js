@@ -2,6 +2,7 @@ import { useRouter } from "next/router";
 import { useState, useEffect } from "react";
 import { client, getProfile, getPublications } from "../../api";
 import Image from "next/image";
+import { ethers } from 'ethers';
 
 function ipfsToHttpUrl(ipfsUrl) {
   const ipfsGateway = "https://ipfs.io/ipfs/";
@@ -38,10 +39,50 @@ export default function Profile() {
     }
   }
 
+  async function connect() {
+    const accounts = await window.ethereum.request({ 
+        method: 'eth_requestAccounts' 
+    });
+    console.log({ accounts })
+  }
+
+
+  
+
+  async function followUser() {
+    if (typeof window.ethereum === 'undefined') {
+        console.log('Please install MetaMask');
+        return;
+      }
+    
+      try {
+        await window.ethereum.request({ method: 'eth_requestAccounts' });
+      } catch (err) {
+        console.log('User rejected account access');
+        return;
+      }
+    
+      const provider = new ethers.providers.Web3Provider(window.ethereum);
+      const signer = provider.getSigner();
+    
+      const contract = new ethers.Contract(address, ABI, signer);
+  
+    try {
+      const tx = await contract.follow([id], [0x0]);
+      await tx.wait();
+      console.log("Followed user successfully");
+    } catch (err) {
+      console.log("Error following user: ", err);
+    }
+  }
+  
+
   if (!profile) return null;
 
   return (
     <div>
+        <button onClick={connect}>Connect</button>
+
       {profile.picture && profile.picture.original ? (
         <Image
           width={200}
@@ -60,6 +101,8 @@ export default function Profile() {
         <p>Followers: {profile.stats.totalFollowers}</p>
         <p>Following: {profile.stats.totalFollowing}</p>
       </div>
+<button onClick={followUser}>Follow user</button>
+
 
       <div>
         {
